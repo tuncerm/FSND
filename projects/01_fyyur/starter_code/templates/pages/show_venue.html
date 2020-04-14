@@ -5,6 +5,18 @@
 	<div class="col-sm-6">
 		<h1 class="monospace">
 			{{ venue.name }}
+            <div class="btn-group" role="group">
+              <a type="button" class="btn btn-info" href="/venues/{{ venue.id }}/edit"><i class="far fa-edit"></i></a>
+              <button id="delete-venue" type="button" class="btn btn-danger"><i class="fas fa-trash-alt"></i></button>
+            </div>
+            <script>
+                deleteButton = document.getElementById('delete-venue');
+                deleteButton.onclick = ()=>{
+                    fetch("/venues/{{ venue.id }}", {method:'DELETE'}).then(res=>{
+                        window.location = res.url;
+                    });
+                }
+            </script>
 		</h1>
 		<p class="subtitle">
 			ID: {{ venue.id }}

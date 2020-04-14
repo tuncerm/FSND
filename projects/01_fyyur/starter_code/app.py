@@ -119,8 +119,7 @@ def format_datetime(value, format='medium'):
         format = "EEEE MMMM, d, y 'at' h:mma"
     elif format == 'medium':
         format = "EE MM, dd, y h:mma"
-    return babel.dates.format_datetime(date, format)
-
+    return babel.dates.format_datetime(date, format, locale='en')
 
 app.jinja_env.filters['datetime'] = format_datetime
 
@@ -139,7 +138,7 @@ def index():
 
 @app.route('/venues')
 def venues():
-    # TODO: replace with real venues data.
+    # DONE: replace with real venues data.
     #       num_shows should be aggregated based on number of upcoming shows per venue.
 
     # With help from the knowledge - https://knowledge.udacity.com/questions/112669
@@ -167,19 +166,24 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+    # DONE: implement search on artists with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-    response = {
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
-    }
-    return render_template('pages/search_venues.html', results=response,
-                           search_term=request.form.get('search_term', ''))
+    search_term = request.form.get('search_term', '')
+    venues = Venue.query.filter(Venue.name.like("%" + search_term + "%")).all()
+    count = len(venues)
+    data = []
+    for venue in venues:
+        data.append({
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": len(
+                db.session.query(Show).filter(Show.venue_id == venue.id).filter(Show.start_time > datetime.now()).all())
+        })
+
+    response = {"count": count, "data": data}
+
+    return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 
 @app.route('/venues/<int:venue_id>')
@@ -188,8 +192,8 @@ def show_venue(venue_id):
     # DONE: replace with real venue data from the venues table, using venue_id
     data = Venue.query.get(venue_id)
     data.genres = data.genres.split(", ")
-    data.upcoming_shows = db.session.query(Show).filter(Show.venue_id == 1).filter(Show.start_time > datetime.now()).all()
-    data.past_shows = db.session.query(Show).filter(Show.venue_id == 1).filter(Show.start_time <= datetime.now()).all()
+    data.upcoming_shows = db.session.query(Show).filter(Show.venue_id == venue_id).filter(Show.start_time > datetime.now()).all()
+    data.past_shows = db.session.query(Show).filter(Show.venue_id == venue_id).filter(Show.start_time <= datetime.now()).all()
     data.past_shows_count = len(data.past_shows)
     data.upcoming_shows_count = len(data.upcoming_shows)
 
@@ -209,13 +213,17 @@ def create_venue_form():
 def create_venue_submission():
     # DONE: insert form data as a new Venue record in the db, instead
     # TODO: modify data to be the data object returned from db insertion
+    form = VenueForm()
+    if not form.validate():
+        flash(form.errors)
+        return redirect(url_for('create_venue_form'))
+
     try:
         venue = Venue(name=request.form.get('name'), city=request.form.get('city'), state=request.form.get('state'),
                       address=request.form.get('address'), phone=request.form.get('phone'),
                       facebook_link=request.form.get('facebook_link'), genres=", ".join(request.form.getlist('genres')))
         db.session.add(venue)
         db.session.commit()
-        print(venue.name)
         # on successful db insert, flash success
         flash('Venue ' + request.form['name'] + ' was successfully listed!')
     except:
@@ -231,19 +239,25 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-    # TODO: Complete this endpoint for taking a venue_id, and using
+    # DONE: Complete this endpoint for taking a venue_id, and using
     # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
-    # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
+    try:
+        Venue.query.filter_by(id=venue_id).delete()
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+    # DONE: BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
     # clicking that button delete it from the db then redirect the user to the homepage
-    return None
+    return redirect(url_for('venues'))
 
 
 #  Artists
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-    # TODO: replace with real data returned from querying the database
+    # DONE: replace with real data returned from querying the database
 
     data = Artist.query.with_entities(Artist.id, Artist.name)
 
@@ -252,19 +266,24 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
+    # DONE: implement search on artists with partial string search. Ensure it is case-insensitive.
+    # search for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
     # search for "band" should return "The Wild Sax Band".
-    response = {
-        "count": 1,
-        "data": [{
-            "id": 4,
-            "name": "Guns N Petals",
-            "num_upcoming_shows": 0,
-        }]
-    }
-    return render_template('pages/search_artists.html', results=response,
-                           search_term=request.form.get('search_term', ''))
+    search_term = request.form.get('search_term', '')
+    artists = Artist.query.filter(Artist.name.like("%" + search_term + "%")).all()
+    count = len(artists)
+    data = []
+    for artist in artists:
+        data.append({
+            "id": artist.id,
+            "name": artist.name,
+            "num_upcoming_shows": len(
+                db.session.query(Show).filter(Show.artist_id == artist.id).filter(Show.start_time > datetime.now()).all())
+        })
+
+    response = {"count": count, "data": data}
+
+    return render_template('pages/search_artists.html', results=response, search_term=search_term)
 
 
 @app.route('/artists/<int:artist_id>')
@@ -273,8 +292,8 @@ def show_artist(artist_id):
     # DONE: replace with real artist data from the artist table, using artist_id
     data = Artist.query.get(artist_id)
     data.genres = data.genres.split(", ")
-    data.upcoming_shows = db.session.query(Show).filter(Show.artist_id == 1).filter(Show.start_time > datetime.now()).all()
-    data.past_shows = db.session.query(Show).filter(Show.artist_id == 1).filter(Show.start_time <= datetime.now()).all()
+    data.upcoming_shows = db.session.query(Show).filter(Show.artist_id == artist_id).filter(Show.start_time > datetime.now()).all()
+    data.past_shows = db.session.query(Show).filter(Show.artist_id == artist_id).filter(Show.start_time <= datetime.now()).all()
     data.past_shows_count = len(data.past_shows)
     data.upcoming_shows_count = len(data.upcoming_shows)
 
@@ -303,7 +322,7 @@ def edit_artist_submission(artist_id):
 def edit_venue(venue_id):
     form = VenueForm()
     venue = Venue.query.get(venue_id)
-    # TODO: populate form with values from venue with ID <venue_id>
+    # DONE: populate form with values from venue with ID <venue_id>
     return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 
@@ -327,7 +346,7 @@ def create_artist_form():
 def create_artist_submission():
     # called upon submitting the new artist listing form
     # DONE: insert form data as a new Artist record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
+    # TODO: modify data to be the data object returned from db insertion //?
     try:
         artist = Artist(name=request.form.get('name'), city=request.form.get('city'), state=request.form.get('state'),
                         phone=request.form.get('phone'), facebook_link=request.form.get('facebook_link'),
@@ -392,6 +411,61 @@ def shows():
     }]
     return render_template('pages/shows.html', shows=data)
 
+@app.route('/shows/search', methods=['POST'])
+def search_shows():
+    # DONE: implement search on artists with partial string search. Ensure it is case-insensitive.
+    # seach for Hop should return "The Musical Hop".
+    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    search_term = request.form.get('search_term', '')
+    venues = Venue.query.filter(Venue.name.like("%" + search_term + "%")).all()
+    count = len(venues)
+    data = []
+    for venue in venues:
+        data.append({
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": len(
+                db.session.query(Show).filter(Show.venue_id == venue.id).filter(Show.start_time > datetime.now()).all())
+        })
+
+    response = {"count": count, "data": data}
+    data = [{
+        "venue_id": 1,
+        "venue_name": "The Musical Hop",
+        "artist_id": 4,
+        "artist_name": "Guns N Petals",
+        "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
+        "start_time": "2019-05-21T21:30:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 5,
+        "artist_name": "Matt Quevedo",
+        "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
+        "start_time": "2019-06-15T23:00:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 6,
+        "artist_name": "The Wild Sax Band",
+        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+        "start_time": "2035-04-01T20:00:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 6,
+        "artist_name": "The Wild Sax Band",
+        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+        "start_time": "2035-04-08T20:00:00.000Z"
+    }, {
+        "venue_id": 3,
+        "venue_name": "Park Square Live Music & Coffee",
+        "artist_id": 6,
+        "artist_name": "The Wild Sax Band",
+        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
+        "start_time": "2035-04-15T20:00:00.000Z"
+    }]
+    return render_template('pages/show.html', shows=data, search_term=search_term)
 
 @app.route('/shows/create')
 def create_shows():
