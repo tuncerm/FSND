@@ -110,6 +110,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['success'])
         self.assertTrue(data['question'])
 
+    def test_405_error(self):
+        res = self.client().post('/categories', json={'type': 'new'})
+
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertFalse(data['success'])
+        self.assertEqual(data['message'], 'Method Not Allowed!')
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
