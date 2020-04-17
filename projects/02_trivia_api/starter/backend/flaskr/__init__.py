@@ -13,11 +13,11 @@ def create_app(test_config=None):
     setup_db(app)
 
     '''
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @DONE: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     '''
     CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
     '''
-    @TODO: Use the after_request decorator to set Access-Control-Allow
+    @DONE: Use the after_request decorator to set Access-Control-Allow
     '''
 
     @app.after_request
@@ -28,7 +28,7 @@ def create_app(test_config=None):
         return response
 
     '''
-    @TODO: 
+    @DONE: 
     Create an endpoint to handle GET requests 
     for all available categories.
     '''
@@ -43,7 +43,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create an endpoint to handle GET requests for questions, 
     including pagination (every 10 questions). 
     This endpoint should return a list of questions, 
@@ -85,7 +85,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create an endpoint to DELETE question using a question ID. 
   
     TEST: When you click the trash icon next to a question, the question will be removed.
@@ -110,7 +110,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create an endpoint to POST a new question, 
     which will require the question and answer text, 
     category, and difficulty score.
@@ -136,7 +136,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create a POST endpoint to get questions based on a search term. 
     It should return any questions for whom the search term 
     is a substring of the question. 
@@ -158,7 +158,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create a GET endpoint to get questions based on category. 
   
     TEST: In the "List" tab / main screen, clicking on one of the 
@@ -177,7 +177,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create a POST endpoint to get questions to play the quiz. 
     This endpoint should take category and previous question parameters 
     and return a random questions within the given category, 
@@ -209,7 +209,7 @@ def create_app(test_config=None):
         })
 
     '''
-    @TODO: 
+    @DONE: 
     Create error handlers for all expected errors 
     including 404 and 422. 
     '''

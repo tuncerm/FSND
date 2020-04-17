@@ -1,5 +1,5 @@
-import unittest
 import json
+import unittest
 
 from flask_sqlalchemy import SQLAlchemy
 from flaskr import create_app
@@ -29,7 +29,7 @@ class TriviaTestCase(unittest.TestCase):
         pass
 
     """
-    TODO
+    DONE
     Write at least one test for each test for successful operation and for expected errors.
     """
 
@@ -69,7 +69,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['question']['question'], new_question['question'])
         self.assertTrue(data['question']['id'])
 
-
     def test_delete_question(self):
         new_question = {
             'question': 'Which?',
@@ -101,7 +100,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(questions_data['success'])
         self.assertEqual(searchData['total_questions'], questions_data['total_questions'])
 
-
     def test_quiz(self):
         json_data = {'quiz_category': {'id': 0, 'type': 'click'}, 'previous_questions': []}
         res = self.client().post('/quizzes', json=json_data)
@@ -111,6 +109,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'])
         self.assertTrue(data['question'])
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
