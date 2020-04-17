@@ -2,14 +2,13 @@ from datetime import datetime
 from enum import Enum
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField
-from wtforms.validators import DataRequired, AnyOf, URL, Regexp, ValidationError
+from wtforms.validators import DataRequired, AnyOf, URL, Regexp, ValidationError, Length, Optional
 
 
 def check_multiple(form, field):
-    genres = Genres.choices()
     error = False
     for genre in field.data:
-        if genre not in genres:
+        if not Genres[genre]:
             error = True
             break
 
@@ -113,11 +112,14 @@ class VenueForm(FlaskForm):
     city = StringField('city', validators=[DataRequired()])
     state = SelectField('state', validators=[DataRequired()], choices=States.choices())
     address = StringField('address', validators=[DataRequired()])
-    phone = StringField('phone', validators=[Regexp(r"^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$")])
+    phone = StringField('phone', validators=[Regexp(r"^\d{3}-\d{3}-\d{4}$")])
     image_link = StringField('image_link', validators=[DataRequired()])
     # DONE implement enum restriction
     genres = SelectMultipleField('genres', validators=[DataRequired(), check_multiple], choices=Genres.choices())
-    facebook_link = StringField('facebook_link', validators=[URL()])
+    facebook_link = StringField('facebook_link', validators=[Optional(), URL()])
+    website = StringField('website', validators=[Optional(), URL()])
+    seeking_talent = SelectField('seeking_talent', choices=[('False', 'No'), ('True', 'Yes')])
+    seeking_description = StringField('seeking_description', validators=[Optional(), Length(max=120)])
 
 
 class ArtistForm(FlaskForm):
@@ -125,11 +127,14 @@ class ArtistForm(FlaskForm):
     city = StringField('city', validators=[DataRequired()])
     state = SelectField('state', validators=[DataRequired()], choices=States.choices())
     # DONE implement validation logic for state
-    phone = StringField('phone', validators=[Regexp(r"^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$")])
+    phone = StringField('phone', validators=[Regexp(r"^\d{3}-\d{3}-\d{4}$")])
     image_link = StringField('image_link')
     # DONE implement enum restriction
     genres = SelectMultipleField('genres', validators=[DataRequired(), check_multiple], choices=Genres.choices())
-    # TODO implement enum restriction
-    facebook_link = StringField('facebook_link', validators=[URL()])
+    # DONE implement enum restriction
+    facebook_link = StringField('facebook_link', validators=[Optional(), URL()])
+    website = StringField('website', validators=[Optional(), URL()])
+    seeking_venue = SelectField('seeking_venue', choices=[('False', 'No'), ('True', 'Yes')])
+    seeking_description = StringField('seeking_description', validators=[Optional(), Length(max=120)])
 
-# TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
+# DONE IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
