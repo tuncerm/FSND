@@ -73,6 +73,9 @@ def create_app(test_config=None):
             Question.id).all()
         questions_in_page = paginate_questions(page, questions)
         categories = {item['id']: item['type'] for item in [category.format() for category in Category.query.all()]}
+        if len(questions_in_page) is 0:
+            abort(404)
+
         return jsonify({
             "success": True,
             "questions": questions_in_page,
@@ -148,6 +151,7 @@ def create_app(test_config=None):
         search_term = request.get_json()['searchTerm']
         questions = Question.query.filter(Question.question.like(f"%{search_term}%")).all()
         return jsonify({
+            "success": True,
             "questions": [item.format() for item in questions],
             "total_questions": len(questions),
             "current_category": None
@@ -187,7 +191,6 @@ def create_app(test_config=None):
     @app.route('/quizzes', methods=['POST'])
     def get_quiz():
         body = request.get_json()
-        print(body)
         quiz_category = body['quiz_category']['id']
         previous_questions = body['previous_questions']
         questions = Question.query.order_by(Question.id).filter_by(
