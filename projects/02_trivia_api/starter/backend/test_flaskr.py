@@ -85,12 +85,11 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['question']['id'])
 
     def test_create_empty_question(self):
-        new_question = {
-            'key': 'value'}
+        new_question = {'key': 'value'}
         res = self.client().post('/questions', json=new_question)
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.status_code, 400)
         self.assertFalse(data['success'])
 
     def test_delete_question(self):

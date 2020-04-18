@@ -129,6 +129,9 @@ def create_app(test_config=None):
     @app.route('/questions', methods=['POST'])
     def create_question():
         body = request.get_json()
+        if ('question' not in body) or ('answer' not in body) or \
+           ('category' not in body) or ('difficulty' not in body):
+            abort(400)
         new_question = Question(
             question=body['question'], answer=body['answer'],
             category=body['category'], difficulty=body['difficulty'])
