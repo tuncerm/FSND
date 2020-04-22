@@ -3,7 +3,7 @@ from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
 from .auth.auth import requires_auth, AuthError
-from .database.models import setup_db, Drink
+from .database.models import setup_db, Drink, db_drop_and_create_all
 
 app = Flask(__name__)
 setup_db(app)
@@ -83,7 +83,6 @@ def get_drinks_detail(payload):
 @requires_auth('post:drinks')
 def create_drink(payload):
     body = request.get_json()
-    print(body)
     title = body.get('title', None)
     if not title:
         abort(422)
@@ -93,10 +92,9 @@ def create_drink(payload):
         abort(422)
 
     drink = Drink(title=title, recipe=recipe)
-    print(drink)
     try:
         drink.insert()
-    except:
+    except Exception:
         abort(500)
 
     return jsonify({
@@ -125,7 +123,12 @@ def update_drink(payload, drink_id):
     drink = Drink.query.filter_by(id=drink_id).first()
 
     if drink is None:
-        abort(404)
+        return json.dumps({
+            'success':
+                False,
+            'error':
+                'Drink #' + drink_id + ' not found to be edited'
+        }), 404
 
     body = request.get_json()
     title = body.get('title', None)
@@ -135,7 +138,7 @@ def update_drink(payload, drink_id):
 
     try:
         drink.update()
-    except:
+    except Exception:
         abort(500)
 
     return jsonify({
@@ -167,7 +170,7 @@ def delete_drink(payload, drink_id):
     id = drink.long()['id']
     try:
         drink.delete()
-    except:
+    except Exception:
         abort(500)
 
     return jsonify({
