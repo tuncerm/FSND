@@ -1,5 +1,5 @@
-from flask import Flask, jsonify
-from flask import Flask, jsonify
+import json
+from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
 from .auth.auth import requires_auth, AuthError
@@ -60,9 +60,11 @@ def get_drinks():
 
 @app.route('/drinks-detail')
 @requires_auth('get:drinks-detail')
-def get_drinks_detail(data):
-    print(data)
-    return jsonify({"drinks": "d"})
+def get_drinks_detail(payload):
+    return jsonify({
+        "success": True,
+        "drinks": [drink.long() for drink in Drink.query.all()]
+    })
 
 
 '''
@@ -79,8 +81,28 @@ def get_drinks_detail(data):
 
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
-def create_drink():
-    return jsonify({"drinks": "d"})
+def create_drink(payload):
+    body = request.get_json()
+    print(body)
+    title = body.get('title', None)
+    if not title:
+        abort(422)
+    recipe = str(json.dumps(body.get('recipe', None)))
+
+    if not recipe:
+        abort(422)
+
+    drink = Drink(title=title, recipe=recipe)
+    print(drink)
+    try:
+        drink.insert()
+    except:
+        abort(500)
+
+    return jsonify({
+        "success": True,
+        "drinks": [drink.long()]
+    })
 
 
 '''
@@ -99,8 +121,27 @@ def create_drink():
 
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
-def update_drink(drink_id):
-    return jsonify({"drinks": "d"})
+def update_drink(payload, drink_id):
+    drink = Drink.query.filter_by(id=drink_id).first()
+
+    if drink is None:
+        abort(404)
+
+    body = request.get_json()
+    title = body.get('title', None)
+    recipe = str(json.dumps(body.get('recipe', None)))
+    drink.title = title
+    drink.recipe = recipe
+
+    try:
+        drink.update()
+    except:
+        abort(500)
+
+    return jsonify({
+        "success": True,
+        "drinks": [drink.long()]
+    })
 
 
 '''
@@ -118,8 +159,21 @@ def update_drink(drink_id):
 
 @app.route('/drinks/<int:drink_id>', methods=["DELETE"])
 @requires_auth('delete:drinks')
-def delete_drink(drink_id):
-    return jsonify({"drinks": "d"})
+def delete_drink(payload, drink_id):
+    drink = Drink.query.filter_by(id=drink_id).first()
+    if drink is None:
+        abort(404)
+
+    id = drink.long()['id']
+    try:
+        drink.delete()
+    except:
+        abort(500)
+
+    return jsonify({
+        "success": True,
+        "drinks": id
+    })
 
 
 # Error Handling
